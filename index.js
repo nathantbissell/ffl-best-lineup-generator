@@ -28,27 +28,80 @@ class Psychic {
       _.includes(boxscorePlayer.player.eligiblePositions, position)
     );
   }
-  static handleNonFlexPosition(lineup, position) {
+  static handleNonFlexPosition(lineup, position, amount) {
     const players = _.filter(lineup, (player) => this.filterPosition(player, position));
     const sortedPlayers = _.sortBy(players, ['totalPoints']);
-    return _.last(sortedPlayers);
+    if (amount === 2) {
+        let list = [];
+        list.push(_.last(sortedPlayers))
+        sortedPlayers.pop();
+        list.push(_.last(sortedPlayers));
+        return list;
+    } else {
+        return _.last(sortedPlayers);
+    }
   }
+
+//   static handleMultipleOfSamePosition(position) {
+//     bestPos.forEach(pos => {
+//         bestRoster.push(`${QB} - ${qb.player.fullName}: ${qb.totalPoints}pts`);
+//         bestSum += qb.totalPoints;
+//         if (qb.position === 'Bench') {
+//           numChanges += 1;
+//         }
+//     })
+// }
+
+
+
   static analyzeLineup(lineup, score) {
     let bestSum = 0;
-    const bestRoster = [];
     let numChanges = 0;
-    const bestDefense = this.handleNonFlexPosition(lineup, 'D/ST')
+    const bestRoster = [];
+
+    handleSumAndChanges = (pos) => {
+        bestSum += pos.totalPoints;
+        if (pos.position === 'Bench') {
+          numChanges += 1;
+        }
+    }
+
+    const bestDefense = this.handleNonFlexPosition(lineup, 'D/ST', 1)
     bestRoster.push(`${DST} - ${bestDefense.player.fullName}: ${bestDefense.totalPoints}pts`);
     bestSum += bestDefense.totalPoints;
     if (bestDefense.position === 'Bench') {
       numChanges += 1;
     }
-    const bestKicker = this.handleNonFlexPosition(lineup, 'K')
+    const bestKicker = this.handleNonFlexPosition(lineup, 'K', 1)
     bestRoster.push(`${K} - ${bestKicker.player.fullName}: ${bestKicker.totalPoints}pts`);
     bestSum += bestKicker.totalPoints;
     if (bestKicker.position === 'Bench') {
       numChanges += 1;
     }
+
+    const bestQB = this.handleNonFlexPosition(lineup, 'QB', 2)
+    bestQB.forEach(qb => {
+        bestRoster.push(`${QB} - ${qb.player.fullName}: ${qb.totalPoints}pts`);
+        this.handleSumAndChanges(qb);
+    })
+
+
+
+
+    const bestRB = this.handleNonFlexPosition(lineup, 'RB', 2)
+    bestRoster.push(`${RB} - ${bestRB.player.fullName}: ${bestRB.totalPoints}pts`);
+    bestSum += bestRB.totalPoints;
+    if (bestRB.position === 'Bench') {
+      numChanges += 1;
+    }
+
+    const bestWR = this.handleNonFlexPosition(lineup, 'WR', 2)
+    bestRoster.push(`${WR} - ${bestWR.player.fullName}: ${bestWR.totalPoints}pts`);
+    bestSum += bestWR.totalPoints;
+    if (bestWR.position === 'Bench') {
+      numChanges += 1;
+    }
+
     const flexPlayers = _.filter(lineup, (player) => this.filterPosition(player, 'QB') ||
     this.filterPosition(player, 'RB') ||
       this.filterPosition(player, 'WR') ||
