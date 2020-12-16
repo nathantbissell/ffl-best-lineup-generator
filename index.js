@@ -1,20 +1,21 @@
 // importing ff node package
-const { Client } = require("espn-fantasy-football-api/node");
-const _ = require("lodash");
-QB = "QB";
-RB = "RB";
-WR = "WR";
-SLOT = "RB/WR";
-TE = "TE";
-FLEX = "FLEX";
-OP = "OP";
-DST = "D/ST";
-K = "K";
-SEASON_ID = 2020;
-TEAM_ID = 5;
-LEAGUE_ID = 22824;
-SWID = "{12AA4968-2A22-4BB1-9FCE-204F0C714B89}";
-ESPNSS2 =
+import pkg from 'espn-fantasy-football-api/node.js';
+const { Client } = pkg;
+import _ from "lodash";
+const QB = "QB";
+const RB = "RB";
+const WR = "WR";
+const SLOT = "RB/WR";
+const TE = "TE";
+const FLEX = "FLEX";
+const OP = "OP";
+const DST = "D/ST";
+const K = "K";
+const SEASON_ID = 2020;
+const TEAM_ID = 5;
+const LEAGUE_ID = 22824;
+const SWID = "{12AA4968-2A22-4BB1-9FCE-204F0C714B89}";
+const ESPNSS2 =
   "AECljsfesEWuioJ8K1iTu7XbKl6dRl%2B96VdROPcbMGV5SuRNRvFsa8Qqu8DOIiiDG554QksZmdvKlOpWf14HYPiA6A%2F69MOPEHSrvUpRFggfjK8ISMA8fkGe9ue0g7%2B7Lq%2FVr%2BnN7XCVfodfhq9nMrDwDwk8jTJt187rDuAZz5zFU%2F1tnNcdZmVg%2BQesP2LuuKcd3flZaL%2BMa2VPXsWFGyzkzPVkVzW8um9VNGdCWcSUWyptgnad%2BV9KdTud852hTrVl2RTQC9z9NFbBjnApFnn5";
 // Creating client
 const myClient = new Client({
