@@ -34,6 +34,12 @@ class Psychic {
       _.includes(boxscorePlayer.player.eligiblePositions, position)
     );
   }
+  static filterFlexPosition(boxscorePlayer, bestPos, position) {
+    return (
+      (boxscorePlayer.position === position ||
+      _.includes(boxscorePlayer.player.eligiblePositions, position)) && (!_.isEqual(bestPos[0].player, boxscorePlayer.player)) && (!_.isEqual(bestPos[1].player, boxscorePlayer.player))
+    );
+  }
   static handleNonFlexPosition(lineup, position, amount) {
     const players = _.filter(lineup, (player) =>
       this.filterPosition(player, position)
@@ -72,22 +78,6 @@ class Psychic {
     let numChanges = 0;
     const bestRoster = [];
 
-    const bestDefense = this.handleNonFlexPosition(lineup, "D/ST", 1);
-    bestRoster.push(
-      `${DST} - ${bestDefense.player.fullName}: ${bestDefense.totalPoints}pts`
-    );
-    bestSum += bestDefense.totalPoints;
-    if (bestDefense.position === "Bench") {
-      numChanges += 1;
-    }
-    const bestKicker = this.handleNonFlexPosition(lineup, "K", 1);
-    bestRoster.push(
-      `${K} - ${bestKicker.player.fullName}: ${bestKicker.totalPoints}pts`
-    );
-    bestSum += bestKicker.totalPoints;
-    if (bestKicker.position === "Bench") {
-      numChanges += 1;
-    }
 
     const bestQB = this.handleNonFlexPosition(lineup, "QB", 2);
     bestQB.forEach((qb) => {
@@ -120,14 +110,14 @@ class Psychic {
     const flexPlayers = _.filter(
       lineup,
       (player) =>
-        this.filterPosition(player, "QB") ||
-        this.filterPosition(player, "RB") ||
-        this.filterPosition(player, "WR") ||
-        this.filterPosition(player, "TE")
+        this.filterFlexPosition(player, bestQB, "QB") ||
+        this.filterFlexPosition(player, bestRB, "RB") ||
+        this.filterFlexPosition(player, bestWR, "WR") ||
+        this.filterFlexPosition(player, "TE")
     );
-    const flexPlayersByTotalPoints = _.sortBy(flexPlayers, ["totalPoints"]);
-    const sortedFlexPlayers = _.remove(flexPlayersByTotalPoints, bestQB);
-    const flexPos = { SLOT: 1, TE: 1, FLEX: 1, OP: 1 };
+    const sortedFlexPlayers = _.sortBy(flexPlayers, ["totalPoints"]);
+
+    const flexPos = { SLOT: 1, FLEX: 1, OP: 1 };
     while (_.sum(_.values(flexPos)) && !_.isEmpty(sortedFlexPlayers)) {
       const player = sortedFlexPlayers.pop();
       const acceptPlayer = (pos) => {
@@ -141,30 +131,55 @@ class Psychic {
       };
         if (
         flexPos.SLOT > 0 &&
-        (flexPos.RB || flexPos.WR) &&
         _.includes(player.player.eligiblePositions, "RB/WR")
       ) {
         acceptPlayer(SLOT);
         flexPos.SLOT -= 1;
       } else if (
         flexPos.FLEX > 0 &&
-        (flexPos.RB || flexPos.WR || flexPos.TE) &&
         _.includes(player.player.eligiblePositions, "RB/WR/TE")
       ) {
         acceptPlayer(FLEX);
         flexPos.FLEX -= 1;
       } else if (
         flexPos.OP > 0 &&
-        (flexPos.QB || flexPos.RB || flexPos.WR || flexPos.TE) &&
         _.includes(player.player.eligiblePositions, "OP")
       ) {
         acceptPlayer(OP);
         flexPos.OP -= 1;
       }
     }
+
+    const bestTE = this.handleNonFlexPosition(lineup, "TE", 1);
+    bestRoster.push(
+      `${TE} - ${bestTE.player.fullName}: ${bestTE.totalPoints}pts`
+    );
+    bestSum += bestTE.totalPoints;
+    if (bestTE.position === "Bench") {
+      numChanges += 1;
+    }
+    const bestDefense = this.handleNonFlexPosition(lineup, "D/ST", 1);
+    bestRoster.push(
+      `${DST} - ${bestDefense.player.fullName}: ${bestDefense.totalPoints}pts`
+    );
+    bestSum += bestDefense.totalPoints;
+    if (bestDefense.position === "Bench") {
+      numChanges += 1;
+    }
+    const bestKicker = this.handleNonFlexPosition(lineup, "K", 1);
+    bestRoster.push(
+      `${K} - ${bestKicker.player.fullName}: ${bestKicker.totalPoints}pts`
+    );
+    bestSum += bestKicker.totalPoints;
+    if (bestKicker.position === "Bench") {
+      numChanges += 1;
+    }
+    if (score === bestSum) {
+      numChanges = 0;
+    }
     return {
-      bestSum,
       bestRoster,
+      bestSum,
       currentScore: score,
       numChanges,
     };
@@ -176,7 +191,7 @@ class Psychic {
       .getBoxscoreForWeek({ seasonId, matchupPeriodId, scoringPeriodId })
       .then((boxes) => {
         _.forEach(boxes, (box) => {
-          // bestLineups[box.awayTeamId] = this.analyzeLineup(box.awayRoster, box.awayScore);
+          bestLineups[box.awayTeamId] = this.analyzeLineup(box.awayRoster, box.awayScore);
           bestLineups[box.homeTeamId] = this.analyzeLineup(
             box.homeRoster,
             box.homeScore
