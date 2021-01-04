@@ -1,5 +1,5 @@
 // importing ff node package
-import pkg from 'espn-fantasy-football-api/node.js';
+import pkg from "espn-fantasy-football-api/node.js";
 const { Client } = pkg;
 import _ from "lodash";
 const QB = "QB";
@@ -37,7 +37,9 @@ class Psychic {
   static filterFlexPosition(boxscorePlayer, bestPos, position) {
     return (
       (boxscorePlayer.position === position ||
-      _.includes(boxscorePlayer.player.eligiblePositions, position)) && (!_.isEqual(bestPos[0].player, boxscorePlayer.player)) && (!_.isEqual(bestPos[1].player, boxscorePlayer.player))
+        _.includes(boxscorePlayer.player.eligiblePositions, position)) &&
+      !_.isEqual(bestPos[0].player, boxscorePlayer.player) &&
+      !_.isEqual(bestPos[1].player, boxscorePlayer.player)
     );
   }
   static handleNonFlexPosition(lineup, position, amount) {
@@ -63,21 +65,10 @@ class Psychic {
     }
   }
 
-  //   static handleMultipleOfSamePosition(position) {
-  //     bestPos.forEach(pos => {
-  //         bestRoster.push(`${QB} - ${qb.player.fullName}: ${qb.totalPoints}pts`);
-  //         bestSum += qb.totalPoints;
-  //         if (qb.position === 'Bench') {
-  //           numChanges += 1;
-  //         }
-  //     })
-  // }
-
   static analyzeLineup(lineup, score) {
     let bestSum = 0;
     let numChanges = 0;
     const bestRoster = [];
-
 
     const bestQB = this.handleNonFlexPosition(lineup, "QB", 2);
     bestQB.forEach((qb) => {
@@ -129,7 +120,7 @@ class Psychic {
           numChanges += 1;
         }
       };
-        if (
+      if (
         flexPos.SLOT > 0 &&
         _.includes(player.player.eligiblePositions, "RB/WR")
       ) {
@@ -174,38 +165,84 @@ class Psychic {
     if (bestKicker.position === "Bench") {
       numChanges += 1;
     }
+
     if (score === bestSum) {
       numChanges = 0;
     }
+    const plusMinus = score - bestSum;
+
     return {
       bestRoster,
       bestSum,
       currentScore: score,
+      plusMinus,
       numChanges,
     };
   }
 
-  static runForWeek({ seasonId, matchupPeriodId, scoringPeriodId }) {
-    const bestLineups = {};
+  static runForWeek({ seasonId, matchupPeriodId, scoringPeriodId, teamId }) {
+    let bestLineup = [];
     return myClient
       .getBoxscoreForWeek({ seasonId, matchupPeriodId, scoringPeriodId })
       .then((boxes) => {
-        _.forEach(boxes, (box) => {
-          bestLineups[box.awayTeamId] = this.analyzeLineup(box.awayRoster, box.awayScore);
-          bestLineups[box.homeTeamId] = this.analyzeLineup(
-            box.homeRoster,
-            box.homeScore
-          );
+        _.forEach(boxes, (matchup) => {
+          if (matchup.awayTeamId == teamId) {
+            bestLineup.push(
+              this.analyzeLineup(matchup.awayRoster, matchup.awayScore)
+            );
+          }
+          if (matchup.homeTeamId == teamId) {
+            bestLineup.push(
+              this.analyzeLineup(matchup.homeRoster, matchup.homeScore)
+            );
+          }
         });
-        return bestLineups;
+        return bestLineup;
       });
   }
+
+  static runForSeason({ seasonId, teamId }) {
+    let arrayOfWeeklyData = [];
+    let totalNumChanges;
+    let totalPlusMinus = [];
+    let bestScoreOfYear;
+    for (let i = 1; i < 17; i++) {
+      this.runForWeek({
+        seasonId: seasonId,
+        matchupPeriodId: i,
+        scoringPeriodId: i,
+        teamId: teamId,
+      }).then((result) => {
+        // console.log(`------------------------------- Week ${i}-------------------------------`);
+        if (!_.isEmpty(result)) {
+          const key = result[Object.keys(result)[0]];
+          arrayOfWeeklyData.push(key);
+          console.log(arrayOfWeeklyData);
+          console.log(arrayOfWeeklyData[0].numChanges);
+        } else {
+          console.log(`Warning: it appears week ${i} has not been played yet.`);
+        }
+
+        // totalNumChanges = numChanges;
+        // totalPlusMinus += result.plusMinus;
+        // if (result.bestSum > bestScoreOfYear) {
+        //   bestScoreOfYear = result.bestSum;
+        // }
+        // console.log("Total Number of Changes: " + totalNumChanges);
+        // console.log("Actual Score Handicap: " + totalPlusMinus);
+        // console.log("Best Score of the Year: " + bestScoreOfYear);
+      });
+    }
+    // console.log(`Season Lineups...  ${result}`);
+    // const getPlusMinus = (plusMinus) => {
+    //   return result[plusMinus];
+    // };
+    // const keys = Object.keys(result);
+    // console.log(`Keys: ${keys}`);
+  }
 }
-Psychic.runForWeek({
-  seasonId: 2020,
-  matchupPeriodId: 13,
-  scoringPeriodId: 13,
-}).then((result) => {
-  console.log(result);
-  return result;
+
+Psychic.runForSeason({
+  seasonId: SEASON_ID,
+  teamId: 5,
 });
