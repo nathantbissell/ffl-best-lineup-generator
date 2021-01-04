@@ -202,10 +202,11 @@ class Psychic {
   }
 
   static runForSeason({ seasonId, teamId }) {
+    let counter = 0;
     let arrayOfWeeklyData = [];
-    let totalNumChanges;
-    let totalPlusMinus = [];
-    let bestScoreOfYear;
+    let totalNumChanges = 0;
+    let totalPlusMinus = 0;
+    let bestScoreOfYear = 0;
     for (let i = 1; i < 17; i++) {
       this.runForWeek({
         seasonId: seasonId,
@@ -217,28 +218,32 @@ class Psychic {
         if (!_.isEmpty(result)) {
           const key = result[Object.keys(result)[0]];
           arrayOfWeeklyData.push(key);
-          console.log(arrayOfWeeklyData);
-          console.log(arrayOfWeeklyData[0].numChanges);
+          counter = arrayOfWeeklyData.length - 1;
+          totalNumChanges = totalNumChanges + arrayOfWeeklyData[counter].numChanges;
+          totalPlusMinus = totalPlusMinus + arrayOfWeeklyData[counter].plusMinus;
+          if (arrayOfWeeklyData[counter].bestSum > bestScoreOfYear) {
+            bestScoreOfYear = arrayOfWeeklyData[counter].bestSum;
+          }
+          console.log(`Total Changes: ${totalNumChanges}`);
+          console.log(`+/- : ${totalPlusMinus}`);
+          console.log(`Best Score: ${bestScoreOfYear}`)
         } else {
           console.log(`Warning: it appears week ${i} has not been played yet.`);
         }
 
-        // totalNumChanges = numChanges;
-        // totalPlusMinus += result.plusMinus;
-        // if (result.bestSum > bestScoreOfYear) {
-        //   bestScoreOfYear = result.bestSum;
-        // }
-        // console.log("Total Number of Changes: " + totalNumChanges);
-        // console.log("Actual Score Handicap: " + totalPlusMinus);
-        // console.log("Best Score of the Year: " + bestScoreOfYear);
       });
     }
-    // console.log(`Season Lineups...  ${result}`);
-    // const getPlusMinus = (plusMinus) => {
-    //   return result[plusMinus];
-    // };
-    // const keys = Object.keys(result);
-    // console.log(`Keys: ${keys}`);
+
+
+        console.log("Total Number of Changes: " + totalNumChanges);
+        console.log("Actual Score Handicap: " + totalPlusMinus);
+        console.log("Best Score of the Year: " + bestScoreOfYear);
+        return {
+          arrayOfWeeklyData,
+          totalNumChanges,
+          totalPlusMinus,
+          bestScoreOfYear,
+        };
   }
 }
 
