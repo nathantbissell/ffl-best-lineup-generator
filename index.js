@@ -2,6 +2,7 @@
 import pkg from "espn-fantasy-football-api/node.js";
 const { Client } = pkg;
 import _ from "lodash";
+import fs from "fs";
 const QB = "QB";
 const RB = "RB";
 const WR = "WR";
@@ -214,7 +215,7 @@ class Psychic {
         scoringPeriodId: i,
         teamId: teamId,
       }).then((result) => {
-        // console.log(`------------------------------- Week ${i}-------------------------------`);
+        console.log(`------------------------------- Week ${i}-------------------------------`);
         if (!_.isEmpty(result)) {
           const key = result[Object.keys(result)[0]];
           arrayOfWeeklyData.push(key);
@@ -224,9 +225,20 @@ class Psychic {
           if (arrayOfWeeklyData[counter].bestSum > bestScoreOfYear) {
             bestScoreOfYear = arrayOfWeeklyData[counter].bestSum;
           }
-          console.log(`Total Changes: ${totalNumChanges}`);
-          console.log(`+/- : ${totalPlusMinus}`);
+          let roster = arrayOfWeeklyData[counter].bestRoster
+          console.log(arrayOfWeeklyData[counter].bestRoster);
+          console.log(`Total Roster Changes: ${totalNumChanges}`);
+          console.log(`Handicap: ${totalPlusMinus}`);
           console.log(`Best Score: ${bestScoreOfYear}`)
+
+          var writeStream = fs.createWriteStream("JournalDEV.txt");
+          writeStream.write(`------------------------------- Week ${i}-------------------------------`);
+          writeStream.write(roster);
+          writeStream.write(`Total Roster Changes: ${totalNumChanges}`);
+          writeStream.write(`Handicap: ${totalPlusMinus}`);
+          writeStream.write(`Best Score: ${bestScoreOfYear}`);
+          writeStream.end();
+
         } else {
           console.log(`Warning: it appears week ${i} has not been played yet.`);
         }
@@ -234,16 +246,12 @@ class Psychic {
       });
     }
 
-
-        console.log("Total Number of Changes: " + totalNumChanges);
-        console.log("Actual Score Handicap: " + totalPlusMinus);
-        console.log("Best Score of the Year: " + bestScoreOfYear);
         return {
           arrayOfWeeklyData,
           totalNumChanges,
           totalPlusMinus,
           bestScoreOfYear,
-        };
+        }
   }
 }
 
