@@ -1,8 +1,8 @@
 // importing ff node package
 import pkg from "espn-fantasy-football-api/node.js";
 const { Client } = pkg;
-import _ from "lodash";
 import fs from "fs";
+import _ from "lodash";
 const QB = "QB";
 const RB = "RB";
 const WR = "WR";
@@ -35,13 +35,13 @@ class Psychic {
       _.includes(boxscorePlayer.player.eligiblePositions, position)
     );
   }
-  static filterFlexPosition(boxscorePlayer, bestPos, position) {
-    return (
-      (boxscorePlayer.position === position ||
-        _.includes(boxscorePlayer.player.eligiblePositions, position)) &&
-      !_.isEqual(bestPos[0].player, boxscorePlayer.player) &&
-      !_.isEqual(bestPos[1].player, boxscorePlayer.player)
-    );
+  static filterFlexPosition(boxscorePlayer, bestRosterNames) {
+    for (let i = 0; i < bestRosterNames.length; i++) {
+      if (_.isEqual(boxscorePlayer.player.fullName, bestRosterNames[i])) {
+        return false;
+      }
+    }
+    return true;
   }
   static handleNonFlexPosition(lineup, position, amount) {
     const players = _.filter(lineup, (player) =>
@@ -59,53 +59,59 @@ class Psychic {
     }
   }
 
-  static handleSumAndChanges(pos, bestSum, numChanges) {
-    bestSum += pos.totalPoints;
-    if (pos.position === "Bench") {
-      numChanges += 1;
-    }
-  }
+  // static handleSumAndChanges(pos, bestSum, numChanges) {
+  //   bestSum += pos.totalPoints;
+  //   if (pos.position === "Bench") {
+  //     numChanges += 1;
+  //   }
+  // }
 
   static analyzeLineup(lineup, score) {
     let bestSum = 0;
     let numChanges = 0;
     const bestRoster = [];
-
+    const bestRosterNames = [];
     const bestQB = this.handleNonFlexPosition(lineup, "QB", 2);
-    bestQB.forEach((qb) => {
-      bestRoster.push(`${QB} - ${qb.player.fullName}: ${qb.totalPoints}pts`);
-      //this.handleSumAndChanges(qb, bestSum, numChanges);
-      bestSum += qb.totalPoints;
-      if (qb.position === "Bench") {
+    bestQB.forEach((pos) => {
+      bestRoster.push(`${QB} - ${pos.player.fullName}: ${pos.totalPoints}pts`);
+      bestRosterNames.push(pos.player.fullName);
+      bestSum += pos.totalPoints;
+      if (pos.position === "Bench") {
         numChanges += 1;
       }
     });
 
     const bestRB = this.handleNonFlexPosition(lineup, "RB", 2);
-    bestRB.forEach((rb) => {
-      bestRoster.push(`${RB} - ${rb.player.fullName}: ${rb.totalPoints}pts`);
-      bestSum += rb.totalPoints;
-      if (rb.position === "Bench") {
+    bestRB.forEach((pos) => {
+      bestRoster.push(`${RB} - ${pos.player.fullName}: ${pos.totalPoints}pts`);
+      bestRosterNames.push(pos.player.fullName);
+      bestSum += pos.totalPoints;
+      if (pos.position === "Bench") {
         numChanges += 1;
       }
     });
 
     const bestWR = this.handleNonFlexPosition(lineup, "WR", 2);
-    bestWR.forEach((wr) => {
-      bestRoster.push(`${WR} - ${wr.player.fullName}: ${wr.totalPoints}pts`);
-      bestSum += wr.totalPoints;
-      if (wr.position === "Bench") {
+    bestWR.forEach((pos) => {
+      bestRoster.push(`${WR} - ${pos.player.fullName}: ${pos.totalPoints}pts`);
+      bestRosterNames.push(pos.player.fullName);
+      bestSum += pos.totalPoints;
+      if (pos.position === "Bench") {
         numChanges += 1;
       }
     });
+    const bestTE = this.handleNonFlexPosition(lineup, "TE", 1);
+    bestRoster.push(
+      `${TE} - ${bestTE.player.fullName}: ${bestTE.totalPoints}pts`
+    );
+    bestRosterNames.push(bestTE.player.fullName);
+    bestSum += bestTE.totalPoints;
+    if (bestTE.position === "Bench") {
+      numChanges += 1;
+    }
 
-    const flexPlayers = _.filter(
-      lineup,
-      (player) =>
-        this.filterFlexPosition(player, bestQB, "QB") ||
-        this.filterFlexPosition(player, bestRB, "RB") ||
-        this.filterFlexPosition(player, bestWR, "WR") ||
-        this.filterFlexPosition(player, "TE")
+    const flexPlayers = _.filter(lineup, (player) =>
+      this.filterFlexPosition(player, bestRosterNames)
     );
     const sortedFlexPlayers = _.sortBy(flexPlayers, ["totalPoints"]);
 
@@ -142,14 +148,6 @@ class Psychic {
       }
     }
 
-    const bestTE = this.handleNonFlexPosition(lineup, "TE", 1);
-    bestRoster.push(
-      `${TE} - ${bestTE.player.fullName}: ${bestTE.totalPoints}pts`
-    );
-    bestSum += bestTE.totalPoints;
-    if (bestTE.position === "Bench") {
-      numChanges += 1;
-    }
     const bestDefense = this.handleNonFlexPosition(lineup, "D/ST", 1);
     bestRoster.push(
       `${DST} - ${bestDefense.player.fullName}: ${bestDefense.totalPoints}pts`
@@ -215,47 +213,61 @@ class Psychic {
         scoringPeriodId: i,
         teamId: teamId,
       }).then((result) => {
-        console.log(`------------------------------- Week ${i}-------------------------------`);
+        console.log(
+          `------------------------------- Week ${i}-------------------------------`
+        );
         if (!_.isEmpty(result)) {
           const key = result[Object.keys(result)[0]];
           arrayOfWeeklyData.push(key);
           counter = arrayOfWeeklyData.length - 1;
-          totalNumChanges = totalNumChanges + arrayOfWeeklyData[counter].numChanges;
-          totalPlusMinus = totalPlusMinus + arrayOfWeeklyData[counter].plusMinus;
+          totalNumChanges =
+            totalNumChanges + arrayOfWeeklyData[counter].numChanges;
+          totalPlusMinus =
+            totalPlusMinus + arrayOfWeeklyData[counter].plusMinus;
           if (arrayOfWeeklyData[counter].bestSum > bestScoreOfYear) {
             bestScoreOfYear = arrayOfWeeklyData[counter].bestSum;
           }
-          let roster = arrayOfWeeklyData[counter].bestRoster
-          console.log(arrayOfWeeklyData[counter].bestRoster);
+          // let roster = key.bestRoster;
+          // console.log(roster);
+
+          // for weekly amounts
+          // console.log(`Number of Changes: ${key.numChanges}`);
+          // console.log(`Handicap: ${key.plusMinus}`);
+          // console.log(`Best Score Possible: ${key.bestSum}`);
+          // console.log(`Actual Score: ${key.currentScore}`);
+
+          // for yearly amounts
           console.log(`Total Roster Changes: ${totalNumChanges}`);
           console.log(`Handicap: ${totalPlusMinus}`);
-          console.log(`Best Score: ${bestScoreOfYear}`)
-
-          var writeStream = fs.createWriteStream("JournalDEV.txt");
-          writeStream.write(`------------------------------- Week ${i}-------------------------------`);
-          writeStream.write(roster);
-          writeStream.write(`Total Roster Changes: ${totalNumChanges}`);
-          writeStream.write(`Handicap: ${totalPlusMinus}`);
-          writeStream.write(`Best Score: ${bestScoreOfYear}`);
-          writeStream.end();
-
+          console.log(`Best Score: ${bestScoreOfYear}`);
         } else {
           console.log(`Warning: it appears week ${i} has not been played yet.`);
         }
-
       });
     }
 
-        return {
-          arrayOfWeeklyData,
-          totalNumChanges,
-          totalPlusMinus,
-          bestScoreOfYear,
-        }
+    return {
+      arrayOfWeeklyData,
+      totalNumChanges,
+      totalPlusMinus,
+      bestScoreOfYear,
+    };
   }
 }
 
 Psychic.runForSeason({
   seasonId: SEASON_ID,
-  teamId: 5,
+  teamId: 1,
+});
+
+let team = 1;
+let period = 1;
+Psychic.runForWeek({
+  seasonId: SEASON_ID,
+  scoringPeriodId: period,
+  matchupPeriodId: period,
+  teamId: team,
+}).then((result) => {
+  console.log(`---- Week ${period} ----`);
+  console.log(result);
 });
