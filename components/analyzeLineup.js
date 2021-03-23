@@ -10,6 +10,7 @@ const K = "K";
 import _ from "lodash";
 import handleNonFlexPosition from "./filters/handleNonFlexPosition.js";
 import filterFlexPosition from "./filters/filterFlexPosition.js";
+import handleRosterChanges from "./handleRosterChanges.js";
 
 export default function analyzeLineup(lineup) {
   let bestSum = 0;
@@ -30,9 +31,7 @@ export default function analyzeLineup(lineup) {
       bestRoster.push(`${QB} - ${pos.player.fullName}: ${pos.totalPoints}pts`);
       bestRosterNames.push(pos.player.fullName);
       bestSum += pos.totalPoints;
-      if (pos.position === "Bench") {
-        numChanges += 1;
-      }
+      handleRosterChanges(pos, numChanges);
     });
     return bestQB;
   }
@@ -42,6 +41,8 @@ export default function analyzeLineup(lineup) {
     bestRB.forEach((pos) => {
       bestRoster.push(`${RB} - ${pos.player.fullName}: ${pos.totalPoints}pts`);
       bestRosterNames.push(pos.player.fullName);
+      bestSum += pos.totalPoints;
+      handleRosterChanges(pos, numChanges);
     });
   }
 
@@ -51,9 +52,7 @@ export default function analyzeLineup(lineup) {
       bestRoster.push(`${WR} - ${pos.player.fullName}: ${pos.totalPoints}pts`);
       bestRosterNames.push(pos.player.fullName);
       bestSum += pos.totalPoints;
-      if (pos.position === "Bench") {
-        numChanges += 1;
-      }
+      handleRosterChanges(pos, numChanges);
     });
   }
 
@@ -64,9 +63,7 @@ export default function analyzeLineup(lineup) {
     );
     bestRosterNames.push(bestTE.player.fullName);
     bestSum += bestTE.totalPoints;
-    if (bestTE.position === "Bench") {
-      numChanges += 1;
-    }
+    handleRosterChanges(bestTE, numChanges);
   }
 
   function getFlex() {
