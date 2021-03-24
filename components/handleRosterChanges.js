@@ -1,9 +1,6 @@
 export default function handleRosterChanges(pos, numChanges) {
   if (pos.position === "Bench") {
-    numChanges++;
+    numChanges =+ 1;
   }
   return numChanges;
 }
-export default {
-  handleRosterChanges,
-};

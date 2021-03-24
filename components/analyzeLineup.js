@@ -75,15 +75,13 @@ export default function analyzeLineup(lineup) {
 
     while (_.sum(_.values(flexPos)) && !_.isEmpty(sortedFlexPlayers)) {
       const player = sortedFlexPlayers.pop();
-      const acceptPlayer = (pos) => {
-        bestRoster.push(
-          `${pos} - ${player.player.fullName}: ${player.totalPoints}pts`
-        );
-        bestSum += player.totalPoints;
-        if (player.position === "Bench") {
-          numChanges += 1;
-        }
-      };
+          const acceptPlayer = (pos) => {
+      bestRoster.push(
+        `${pos} - ${player.player.fullName}: ${player.totalPoints}pts`
+      );
+      bestSum += player.totalPoints;
+      handleRosterChanges(numChanges, player)
+    };
       if (
         flexPos.SLOT > 0 &&
         _.includes(player.player.eligiblePositions, "RB/WR")
@@ -111,8 +109,8 @@ export default function analyzeLineup(lineup) {
     bestRoster.push(
       `${DST} - ${bestDefense.player.fullName}: ${bestDefense.totalPoints}pts`
     );
-    handleSum(bestSum, bestDefense.totalPoints);
-    handleChanges(numChanges, bestDefense);
+    bestSum += bestDefense.totalPoints;
+    handleRosterChanges(numChanges, bestDefense);
   }
 
   function getKicker() {
@@ -120,19 +118,8 @@ export default function analyzeLineup(lineup) {
     bestRoster.push(
       `${K} - ${bestKicker.player.fullName}: ${bestKicker.totalPoints}pts`
     );
-    handleSum(bestSum, bestKicker.totalPoints);
-    handleChanges(numChanges, bestKicker);
-    return bestKicker;
-  }
-
-  function handleChanges(numChanges, pos) {
-    pos.position === "Bench" ? numChanges++ : numChanges;
-    return numChanges;
-  }
-
-  function handleSum(bestSum, pos) {
-    bestSum += pos.totalPoints;
-    return bestSum;
+    bestSum += bestKicker.totalPoints;
+    handleRosterChanges(numChanges, bestKicker);
   }
 
   return { bestRoster, bestRosterNames, bestSum, numChanges };

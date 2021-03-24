@@ -42,7 +42,6 @@ class Psychic {
     let counter = 0;
     let arrayOfWeeklyData = [];
     let totalNumChanges = 0;
-    let totalPlusMinus = 0;
     let bestScoreOfYear = 0;
     for (let i = 1; i < 17; i++) {
       this.runForWeek({
@@ -60,15 +59,12 @@ class Psychic {
           counter = arrayOfWeeklyData.length - 1;
           totalNumChanges =
             totalNumChanges + arrayOfWeeklyData[counter].numChanges;
-          totalPlusMinus =
-            totalPlusMinus + arrayOfWeeklyData[counter].plusMinus;
           if (arrayOfWeeklyData[counter].bestSum > bestScoreOfYear) {
             bestScoreOfYear = arrayOfWeeklyData[counter].bestSum;
           }
 
           // for yearly amounts
           console.log(`Total Roster Changes: ${totalNumChanges}`);
-          console.log(`Handicap: ${totalPlusMinus}`);
           console.log(`Best Score: ${bestScoreOfYear}`);
         } else {
           console.log(`Warning: it appears week ${i} has not been played yet.`);
@@ -79,7 +75,6 @@ class Psychic {
     return {
       arrayOfWeeklyData,
       totalNumChanges,
-      totalPlusMinus,
       bestScoreOfYear,
     };
   }
