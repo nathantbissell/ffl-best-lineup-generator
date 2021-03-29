@@ -10,7 +10,6 @@ const K = "K";
 import _ from "lodash";
 import handleNonFlexPosition from "./filters/handleNonFlexPosition.js";
 import filterFlexPosition from "./filters/filterFlexPosition.js";
-import handleRosterChanges from "./handleRosterChanges.js";
 
 export default function analyzeLineup(lineup) {
   let bestSum = 0;
@@ -31,7 +30,7 @@ export default function analyzeLineup(lineup) {
       bestRoster.push(`${QB} - ${pos.player.fullName}: ${pos.totalPoints}pts`);
       bestRosterNames.push(pos.player.fullName);
       bestSum += pos.totalPoints;
-      handleRosterChanges(pos, numChanges);
+      pos.position === "Bench" ? numChanges++ : numChanges;
     });
     return bestQB;
   }
@@ -42,7 +41,7 @@ export default function analyzeLineup(lineup) {
       bestRoster.push(`${RB} - ${pos.player.fullName}: ${pos.totalPoints}pts`);
       bestRosterNames.push(pos.player.fullName);
       bestSum += pos.totalPoints;
-      handleRosterChanges(pos, numChanges);
+      pos.position === "Bench" ? numChanges++ : numChanges;
     });
   }
 
@@ -52,7 +51,7 @@ export default function analyzeLineup(lineup) {
       bestRoster.push(`${WR} - ${pos.player.fullName}: ${pos.totalPoints}pts`);
       bestRosterNames.push(pos.player.fullName);
       bestSum += pos.totalPoints;
-      handleRosterChanges(pos, numChanges);
+      pos.position === "Bench" ? numChanges++ : numChanges;
     });
   }
 
@@ -63,7 +62,7 @@ export default function analyzeLineup(lineup) {
     );
     bestRosterNames.push(bestTE.player.fullName);
     bestSum += bestTE.totalPoints;
-    handleRosterChanges(bestTE, numChanges);
+    bestTE.position === "Bench" ? numChanges++ : numChanges;
   }
 
   function getFlex() {
@@ -80,9 +79,7 @@ export default function analyzeLineup(lineup) {
           `${pos} - ${player.player.fullName}: ${player.totalPoints}pts`
         );
         bestSum += player.totalPoints;
-        if (player.position === "Bench") {
-          numChanges += 1;
-        }
+        player.position === "Bench" ? numChanges++ : numChanges;
       };
       if (
         flexPos.SLOT > 0 &&
@@ -111,8 +108,8 @@ export default function analyzeLineup(lineup) {
     bestRoster.push(
       `${DST} - ${bestDefense.player.fullName}: ${bestDefense.totalPoints}pts`
     );
-    handleSum(bestSum, bestDefense.totalPoints);
-    handleChanges(numChanges, bestDefense);
+    bestSum += bestDefense.totalPoints;
+    bestDefense.position === "Bench" ? numChanges++ : numChanges;
   }
 
   function getKicker() {
@@ -120,19 +117,9 @@ export default function analyzeLineup(lineup) {
     bestRoster.push(
       `${K} - ${bestKicker.player.fullName}: ${bestKicker.totalPoints}pts`
     );
-    handleSum(bestSum, bestKicker.totalPoints);
-    handleChanges(numChanges, bestKicker);
+    bestSum += bestKicker.totalPoints;
+    bestKicker.position === "Bench" ? numChanges++ : numChanges;
     return bestKicker;
-  }
-
-  function handleChanges(numChanges, pos) {
-    pos.position === "Bench" ? numChanges++ : numChanges;
-    return numChanges;
-  }
-
-  function handleSum(bestSum, pos) {
-    bestSum += pos.totalPoints;
-    return bestSum;
   }
 
   return { bestRoster, bestRosterNames, bestSum, numChanges };

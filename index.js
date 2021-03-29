@@ -3,6 +3,7 @@ import pkg from "espn-fantasy-football-api/node.js";
 const { Client } = pkg;
 import _ from "lodash";
 import analyzeLineup from "./components/analyzeLineup.js";
+import readline from "readline";
 const SEASON_ID = 2020;
 const TEAM_ID = 5;
 const LEAGUE_ID = 22824;
@@ -42,7 +43,6 @@ class Psychic {
     let counter = 0;
     let arrayOfWeeklyData = [];
     let totalNumChanges = 0;
-    let totalPlusMinus = 0;
     let bestScoreOfYear = 0;
     for (let i = 1; i < 17; i++) {
       this.runForWeek({
@@ -60,15 +60,12 @@ class Psychic {
           counter = arrayOfWeeklyData.length - 1;
           totalNumChanges =
             totalNumChanges + arrayOfWeeklyData[counter].numChanges;
-          totalPlusMinus =
-            totalPlusMinus + arrayOfWeeklyData[counter].plusMinus;
           if (arrayOfWeeklyData[counter].bestSum > bestScoreOfYear) {
             bestScoreOfYear = arrayOfWeeklyData[counter].bestSum;
           }
 
           // for yearly amounts
           console.log(`Total Roster Changes: ${totalNumChanges}`);
-          console.log(`Handicap: ${totalPlusMinus}`);
           console.log(`Best Score: ${bestScoreOfYear}`);
         } else {
           console.log(`Warning: it appears week ${i} has not been played yet.`);
@@ -79,25 +76,78 @@ class Psychic {
     return {
       arrayOfWeeklyData,
       totalNumChanges,
-      totalPlusMinus,
       bestScoreOfYear,
     };
   }
 }
 
 let psy = new Psychic();
-psy.runForSeason({
-  seasonId: SEASON_ID,
-  teamId: 1,
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
 });
 
-// let team = 1;
-// for (let period = 1; period < 16; period++) {
-//   Psychic.runForWeek({
-//     seasonId: SEASON_ID,
-//     scoringPeriodId: period,
-//     matchupPeriodId: period,
-//     teamId: team,
-//   });
-//   console.log(bestLineup);
-// }
+console.log("1 - Get season stats for a team");
+console.log("2 - Get best lineup for a week");
+console.log("3 - Quit");
+rl.question("What would you like to do? ", function (input) {
+  switch (input) {
+    case "1":
+      getSeasonStats();
+      break;
+    case "2":
+      getWeeklyStats();
+      break;
+    case "3":
+      endProgram();
+      break;
+    default:
+    // unknown input
+  }
+});
+
+// psy.runForSeason({
+//   seasonId: SEASON_ID,
+//   teamId: 1,
+// });
+
+let team = 1;
+for (let period = 1; period < 16; period++) {
+  psy.runForWeek({
+    seasonId: SEASON_ID,
+    scoringPeriodId: period,
+    matchupPeriodId: period,
+    teamId: team,
+  });
+  console.log(bestLineup);
+}
+
+function getSeasonStats() {
+  rl.question(
+    "What team would you like to the season for? ",
+    function (inputTeamId) {
+      psy.runForSeason({
+        seasonId: SEASON_ID,
+        teamId: inputTeamId,
+      });
+      rl.close();
+    }
+  );
+}
+
+function getWeeklyStats() {
+  rl.question("What team would you like to the season for? ", function (team) {
+    rl.question("What week would you like to see? ", function (period) {
+      psy.runForWeek({
+        seasonId: SEASON_ID,
+        scoringPeriodId: period,
+        matchupPeriodId: period,
+        teamId: team,
+      });
+    });
+    console.log(bestLineup);
+  });
+}
+
+function endProgram() {}
