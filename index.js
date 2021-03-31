@@ -91,37 +91,20 @@ const rl = readline.createInterface({
 console.log("1 - Get season stats for a team");
 console.log("2 - Get best lineup for a week");
 console.log("3 - Quit");
-rl.question("What would you like to do? ", function (input) {
-  switch (input) {
-    case "1":
+rl.question("What would you like to do? ", (answer) => {
+  while (answer !== "3") {
+    if (answer === "1") {
       getSeasonStats();
-      break;
-    case "2":
+    }
+    else if (answer === "2") {
       getWeeklyStats();
-      break;
-    case "3":
-      endProgram();
-      break;
-    default:
-    // unknown input
+    }
+    else {
+      console.log("Unexpected input, please try again.")
+    }
   }
+  endProgram();
 });
-
-// psy.runForSeason({
-//   seasonId: SEASON_ID,
-//   teamId: 1,
-// });
-
-let team = 1;
-for (let period = 1; period < 16; period++) {
-  psy.runForWeek({
-    seasonId: SEASON_ID,
-    scoringPeriodId: period,
-    matchupPeriodId: period,
-    teamId: team,
-  });
-  console.log(bestLineup);
-}
 
 function getSeasonStats() {
   rl.question(
@@ -131,23 +114,26 @@ function getSeasonStats() {
         seasonId: SEASON_ID,
         teamId: inputTeamId,
       });
-      rl.close();
+      
     }
   );
 }
 
 function getWeeklyStats() {
-  rl.question("What team would you like to the season for? ", function (team) {
-    rl.question("What week would you like to see? ", function (period) {
-      psy.runForWeek({
-        seasonId: SEASON_ID,
-        scoringPeriodId: period,
-        matchupPeriodId: period,
-        teamId: team,
-      });
-    });
-    console.log(bestLineup);
+  rl.question("What team would you like to the season for? ", (team) => {
+    // rl.question("What week would you like to see? ", (period) => {
+    //   psy.runForWeek({
+    //     seasonId: SEASON_ID,
+    //     scoringPeriodId: period,
+    //     matchupPeriodId: period,
+    //     teamId: team,
+    //   });
+    //   console.log(bestLineup);
+    // });
   });
 }
 
-function endProgram() {}
+function endProgram() {
+  console.log("Thanks for using Couch Pots best lineup generator.")
+  rl.close();
+}
